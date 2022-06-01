@@ -1,0 +1,125 @@
+<!-- views/login.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>항해99 미니 블로그 | 로그인</title>
+    <!-- AJAX 통신을 위한 jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <!-- Bulma CSS 링크 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css">
+
+    <!-- 커스텀 폰트 -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard-dynamic-subset.css" />
+
+    <!-- font-awesome 링크  -->
+    <script src="https://kit.fontawesome.com/23b05056a7.js" crossorigin="anonymous"></script>
+
+    <script src="/api.js"></script>
+    <style>
+        *, input::placeholder, input, textarea{
+            font-family: Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+        }
+    </style>
+    <script>
+        function signOut() {
+            localStorage.clear();
+            window.location.href = "/login";
+        }
+
+        if (localStorage.getItem("token")) {
+            getSelf(function () {
+                alert("이미 로그인이 되어있습니다.");
+                window.location.replace("/"); // 로그인되어 있는데 로그인 페이지로 온 경우, 메인 페이지(전체 게시글 조회)로 돌려보냄
+            });
+        }
+
+        function signIn() {
+            let authorName = $("#authorName").val();
+            let password = $("#password").val();
+            if (authorName == '') {
+                $('#authorName').focus()
+                alert('아이디를 입력하여 주세요.');
+                return;
+            } else if (password == '') {
+                $('#password').focus()
+                alert('암호를 입력하여 주세요.');
+                return;
+            }
+            $.ajax({
+                type: "POST",
+                url: "api/login",
+                data: {
+                    authorName: authorName,
+                    password: password,
+                },
+                success: function (response) {
+                    localStorage.setItem("token", response.token);
+                    window.location.replace("/");
+                },
+                error: function (error) {
+                    alert("로그인에 실패하였습니다.");
+                },
+            });
+        }
+    </script>
+</head>
+
+
+<body>
+    <section class="hero is-info is-small">
+        <div class="hero-body">
+          <p class="title" style="text-align: center;">
+            로그인
+          </p>
+          <p class="subtitle" style="text-align: center;">
+            환영합니다! 항해99 블로그 로그인
+          </p>
+        </div>
+      </section>
+    <section class="hero is-halfheight">
+		<div class="hero-body">
+            <div class="container has-text-center">
+				<div class="columns is-variable is-centered">
+					<div class="column is-half has-text-left">
+						<div class="field">
+							<label class="label">아이디</label>
+							<div class="control">
+                                <input class="input is-medium" id="authorName" type="text" placeholder="로그인 아이디를 입력하세요.">
+							</div>
+						</div>
+                        <div class="field">
+							<label class="label">비밀번호</label>
+							<div class="control">
+								<input class="input is-medium" id="password" type="password" placeholder="비밀번호를 입력하세요.">
+							</div>
+						</div>
+						<div class="control">
+                                <div class="buttons is-centered">
+                                    <button type="submit" class="button is-info is-medium" onclick="signIn();">
+                                        <span class="icon is-small"><i class="fas fa-sign-in-alt"></i></span>
+                                        <span>로그인</span>
+                                    </button>
+                                    <button type="submit" class="button is-info is-outlined is-medium" onclick="window.location.href = '/signup'">
+                                        <span class="icon is-small"><i class="fas fa-user-plus"></i></span>
+                                        <span>회원가입</span>
+                                    </button>
+                                    <button type="button" class="button is-warning is-outline is-medium" onclick="window.location.href = '/'">
+                                        <span class="icon is-small"><i class="fas fa-binoculars"></i></span>
+                                        <span>둘러보기</span>
+                                    </button>
+                                </div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+
+</body>
+
+</html>

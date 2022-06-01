@@ -1,0 +1,290 @@
+<!-- views/read.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title><%=article.title%></title>
+
+    <!-- AJAX 통신을 위한 jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <!-- Bulma CSS 링크 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css">
+
+    <!-- 커스텀 폰트 -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard-dynamic-subset.css" />
+
+    <!-- font-awesome 링크  -->
+    <script src="https://kit.fontawesome.com/23b05056a7.js" crossorigin="anonymous"></script>
+
+    <style>
+        *, input::placeholder, input, textarea{
+            font-family: Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+        }
+    </style>
+</head>
+
+
+<body>
+    <section class="hero is-info is-small">
+        <div class="hero-body">
+        <a onclick="window.location.href='/';">
+          <p class="title" style="text-align: center;">
+            나의 항해99 미니 블로그
+          </p>
+        </a>
+          <div class="hero-foot">
+            <nav class="tabs">
+                <div class="container">
+                    <ul class="is-right">
+                        <li>
+                            <a style="display: none" id="signInFunction" onclick="window.location.href='/login';">
+                                <span class="icon is-small"><i class="fas fa-sign-in-alt"></i></span>
+                                <span>로그인</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a id="signOutFunction" onclick="signOut();">
+                                <span class="icon is-small"><i class="fas fa-sign-out-alt"></i></span>
+                                <span>로그아웃</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+        </div>
+      </section>
+      <div class="container">
+        <!-- START ARTICLE FEED -->
+        <section class="articles">
+            <div class="column is-8 is-offset-2">
+                <div class="block" id="myblock">
+                    <div class="buttons is-right">
+                        <a id="modifyButton" class="button is-primary" onclick="location.href='<%=article.articleId%>/modify'">
+                            <span class="icon is-small"><i class="fas fa-edit"></i></span>
+                            <span>수정하기</span>
+                        </a>
+                    </div>
+                </div>
+                <!-- START ARTICLE -->
+                <input type="hidden" id="authorId" value="<%=article.authorId%>"></input>
+                <div class="card article">
+                    <div class="card-content">
+                        <div class="media">
+                            <div class="media-content has-text-centered">
+                                <p class="title article-title"><%=article.title%></p>
+                                <div class="tags has-addons level-item">
+                                    <span class="tag is-rounded is-info">by <%=article.authorName%></span>
+                                    <span class="tag is-rounded"><%=(article.createdAt).toLocaleDateString('ko-KR')%></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="content article-body">
+                            <p><%=article.content%></p>
+                        </div>
+                        <hr>
+                        <div class="content comments-body">
+                            <div class="block">댓글 <span style="color:deepskyblue"><%=commentsInfo.length%></span></div>
+                            <% commentsInfo.forEach(function(commentInfo, index){ %>
+                            <div id="<%=commentInfo.authorInfo.authorId%>" class="commentAuthorId content comment box">
+                                <div class="comments_userinfo tags">
+                                    <span class="tag is-rounded is-dark"><%=commentInfo.authorInfo.authorName%></span>
+                                    <span class="tag is-rounded is-light"><%=(commentInfo.createdAt).toLocaleDateString('ko-KR')%></span>
+                                </div>
+                                <div id="<%=commentInfo.commentId%>" class="comments_content"><%=commentInfo.content%></div>
+                                <textarea id="commentModifyTextarea<%=index%>" class="textarea" rows="3"><%=commentInfo.content%></textarea>
+                                <!-- 로그인한 사용자의 정보와 이 코멘트의 아이디가 같은경우만 수정/삭제 출력-->
+                                <div class="comments_buttons">
+                                    <div class="buttons are-small is-right">
+                                        <button id="commentModifyButton<%=index%>" type="submit" class="button is-primary is-light" onclick="toggleModify('<%=index%>');">
+                                            <span class="icon is-small"><i class="fas fa-edit"></i></span>
+                                            <span>수정</span>
+                                        </button>
+                                        <button id="commentDeleteButton<%=index%>" type="submit" class="button is-danger is-light" onclick="deleteComment('<%=commentInfo.commentId%>', '<%=article.articleId%>');">
+                                            <span class="icon is-small"><i class="fas fa-trash"></i></span>
+                                            <span>삭제</span>
+                                        </button>
+                                        <button id="commentModifyConfirmButton<%=index%>" type="submit" class="button is-info is-light" onclick="modifyComment('<%=commentInfo.commentId%>', '<%=article.articleId%>', '<%=index%>');">
+                                            <span class="icon is-small"><i class="fas fa-edit"></i></span>
+                                            <span>수정완료</span>
+                                        </button>
+                                        <button id="commentCancelButton<%=index%>" type="submit" class="button is-primary is-danger is-outlined" onclick="toggleModify('<%=index%>');">
+                                            <span class="icon is-small"><i class="far fa-window-close"></i></span>
+                                            <span>취소</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <% }) %>
+                            <div class="block"><strong>댓글 남기기</strong></div>
+                            <div class="control">
+                                <input type="hidden" id="articleId" value="<%=article.articleId%>"></input>
+                                <input type="hidden" id="currentUserId" value=""></input>
+                                <textarea id="new_comment" class="textarea" placeholder="여기에 댓글을 작성하기.." rows="3"></textarea>
+                                <div class="buttons is-right">
+                                    <button type="submit" id="postCommentButton" class="button is-primary is-light is-small is-right" onclick="postComment()">댓글 달기</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- END ARTICLE -->   
+			</div>
+		</div>
+	</section>
+    <script src="/api.js"></script>
+    <script>
+        let user;
+        getSelfInfo(function (u) {
+            user = u;
+        });
+
+        window.onload = function() {
+            console.log("ready");
+            // alert(user["authorId"]);
+            // 현재 user의 authorId랑 $('#authorId').val() 값 비교해서 true false 판별
+            
+            // 로그인 상태일때
+            if(user !== undefined){ 
+                let currentAuthorId = user["authorId"];
+                let articleAuthorId = $('#authorId').val();
+                // 작성자가 아닌 경우 글 [수정하기] 버튼 숨기기
+                if(currentAuthorId !== articleAuthorId){ 
+                    $('#modifyButton').hide();
+                }
+                $('#currentUserId').attr("value",currentAuthorId); // 글 부분 변경. 초기 input value가 비어있음(hidden 상태)
+
+                let commentsHTML = $('.commentAuthorId').get(); // 코멘트 권한 변경. class가 commentAuthorId인 값을 모두 가져옴 (모든 댓글)
+                for (let i=0; i<commentsHTML.length; i++){
+                    index = i.toString();
+                    // 코멘트를 로그인 한 사용자가 쓴것이 아닌 경우
+                    if (currentAuthorId !== commentsHTML[i].id) { 
+                        $('#commentModifyTextarea' + index).hide();
+                        commentsHTML[i].children[3].innerHTML=''; // 댓글 DIV에서 버튼부분(children[3]) 내부 HTML 내용을 제거함
+                    } else { // 코멘트를 현재 로그인 한 사용자가 쓴 경우, [댓글 수정 textarea, 수정완료 버튼, 취소 버튼]을 지우지 않고 숨겨둠
+                        $('#commentModifyTextarea' + index).hide();
+                        $('#commentModifyConfirmButton' + index).hide();
+                        $('#commentCancelButton' + index).hide();
+                    }
+                }
+            } else { // 비회원 상태일 경우
+                
+                // 댓글 입력이 불가하도록 disabled 처리, placeholder 내용 알맞게 변경
+                $('#new_comment').attr("disabled", "");
+                $('#new_comment').attr("placeholder", "로그인 후 댓글 작성이 가능합니다."); 
+
+                // [댓글 달기] 버튼, 글 [수정하기] 버튼 숨기기
+                $('#postCommentButton').hide();
+                $('#modifyButton').hide();
+                $("#signOutFunction").hide();
+                $("#signInFunction").show();
+                let commentsHTML = $('.commentAuthorId').get(); // 코멘트 권한 변경. 모든 코멘트 접근 못하도록 요소 삭제
+                for (let i=0; i<commentsHTML.length; i++){
+                    index = i.toString();
+                    commentsHTML[i].children[3].innerHTML='';
+                    $('#commentModifyTextarea' + index).hide();
+                }
+            }
+        };
+
+        // .hide(), .show() 값을 서로 바꿔줄 toggle 기능.
+        function toggleModify(index){
+            $('#commentModifyTextarea' + index).toggle();
+            $('#commentModifyConfirmButton' + index).toggle();
+            $('#commentCancelButton' + index).toggle();
+            $('#commentModifyButton' + index).toggle();
+            $('#commentDeleteButton' + index).toggle();
+        }
+
+        // 댓글 작성 함수
+        function postComment(){
+            let authorId = user["authorId"]; // 로그인한 사용자로 입력.
+            let articleId = $('#articleId').val();
+            let commentContent = $('#new_comment').val();
+            if (commentContent == '') {
+                $('#new_comment').focus()
+                alert('글 비밀번호를 입력하여 주세요.');
+                return;
+            }
+            $.ajax({
+                type: "POST",
+                url: "/api/comments/write",
+                data: {
+                    authorId: authorId,
+                    articleId: articleId,
+                    commentContent: commentContent,
+                },
+                headers: {
+                    authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+                success: function (response) {
+                    alert(response["msg"])
+                    window.location.href = '/articles/' + articleId;
+                }
+            });
+        }
+        
+        // 댓글 수정 함수. 정확히는, 사용자가 [수정] -> [수정완료]를 눌렀을 때 실행
+        function modifyComment(commentId, articleId, index){
+            let authorId = user["authorId"]; // 로그인한 사용자의 authorId 값을 localStorage 토큰에서 가져와 입력.
+            let modifiedCommentContent = $('#commentModifyTextarea' + index).val();
+            if (modifiedCommentContent == '') {
+                $('#commentModifyTextarea' + index).focus();
+                alert('코멘트 내용을 입력해주세요.');
+                return;
+            }
+            $.ajax({
+                type: "PATCH",
+                url: "/api/comments/" + commentId + "/modify",
+                data: {
+                    commentId: commentId,
+                    articleId: articleId,
+                    modifiedCommentContent: modifiedCommentContent,
+                },
+                headers: {
+                    authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+                success: function (response) {
+                    alert(response["msg"])
+                    window.location.href = '/articles/' + articleId;
+                }
+            });
+        }
+        
+        // 댓글 삭제 함수
+        function deleteComment(commentId, articleId){
+            if (!commentId){
+                alert('코멘트 삭제 실패. commentId 없음');
+            } else {
+                if(confirm("정말로 삭제하시겠습니까?")){
+                    $.ajax({
+                        type: "DELETE",
+                        url: "/api/comments/" + commentId + "/modify",
+                        data: {
+                            commentId: commentId,
+                        },
+                        headers: {
+                            authorization: `Bearer ${localStorage.getItem("token")}`,
+                        },
+                        error: function (request, xhr, status) {
+                            alert(JSON.parse(request.responseText)["msg"]);
+                        },
+                        success: function (response) {
+                            alert(response["msg"])
+                            window.location.href = '/articles/' + articleId;
+                        }
+                    });
+                } else {
+                    return false;
+                }
+            }
+            
+        }
+    </script>
+</body>
+
+</html>

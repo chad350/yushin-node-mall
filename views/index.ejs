@@ -1,0 +1,214 @@
+<!-- views/index.ejs -->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>나의 항해99 미니 블로그</title>
+
+        <!-- Bulma CSS 링크 -->
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css"
+        />
+
+        <!-- 커스텀 폰트 -->
+        <link
+            rel="stylesheet"
+            type="text/css"
+            href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard-dynamic-subset.css"
+        />
+
+        <!-- font-awesome 링크  -->
+        <script
+            src="https://kit.fontawesome.com/23b05056a7.js"
+            crossorigin="anonymous"
+        ></script>
+
+        <!-- AJAX 통신을 위한 jQuery -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+        <style>
+            *,
+            input::placeholder,
+            input,
+            textarea {
+                font-family: Pretendard, -apple-system, BlinkMacSystemFont,
+                    system-ui, Roboto, 'Helvetica Neue', 'Segoe UI',
+                    'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic',
+                    sans-serif;
+            }
+
+            #myblock {
+                margin-top: 24px;
+            }
+            #titleSummary {
+                width: 350px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            #contentSummary {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                display: -webkit-box;
+                -webkit-line-clamp: 3; /* 라인수 */
+                -webkit-box-orient: vertical;
+                word-wrap: break-word;
+                line-height: 1.2em;
+                height: 3.6em;
+            }
+        </style>
+    </head>
+    <body>
+        <section class="hero is-info is-small">
+            <div class="hero-body">
+                <div class="container has-text-centered">
+                    <a onclick="window.location.href='/';"
+                        ><p class="title">나의 항해99 미니 블로그</p></a
+                    >
+                </div>
+            </div>
+            <div class="hero-foot">
+                <nav class="tabs">
+                    <div class="container">
+                        <ul class="is-right">
+                            <li>
+                                <a
+                                    id="signInFunction"
+                                    onclick="window.location.href='/login';"
+                                >
+                                    <span class="icon is-small"
+                                        ><i class="fas fa-sign-in-alt"></i
+                                    ></span>
+                                    <span>로그인</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a
+                                    style="display: none"
+                                    id="signOutFunction"
+                                    onclick="signOut();"
+                                >
+                                    <span class="icon is-small"
+                                        ><i class="fas fa-sign-out-alt"></i
+                                    ></span>
+                                    <span>로그아웃</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+            </div>
+        </section>
+
+        <section class="container" id="card-container">
+            <div class="block" id="myblock">
+                <div
+                    style="display: none"
+                    id="buttons_area"
+                    class="buttons is-right"
+                >
+                    <a
+                        class="button is-primary"
+                        onclick="location.href='/articles/write'"
+                    >
+                        <span class="icon is-small"
+                            ><i class="fas fa-pen"></i
+                        ></span>
+                        <span>글쓰기</span>
+                    </a>
+                </div>
+            </div>
+            <div id="articleCardList" class="columns is-multiline">
+                <div class="column is-one-third">
+                    <div
+                        class="card is-shady"
+                        style="cursor: pointer"
+                        onclick="location.href='/articles/1'"
+                    >
+                        <div class="card-content">
+                            <p class="title is-4" id="titleSummary">샘플제목</p>
+                            <p class="subtitle" id="contentSummary">샘플내용</p>
+                        </div>
+                        <footer class="card-footer">
+                            <p class="card-footer-item">
+                                <span>by <b>샘플작성자</b></span>
+                            </p>
+                            <p class="card-footer-item">
+                                <span>
+                                    <time
+                                        >'2022-01-26
+                                        11:01:49.397Z'.toLocaleDateString('ko-KR')</time
+                                    >
+                                </span>
+                            </p>
+                        </footer>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </body>
+    <script src="/api.js"></script>
+    <script>
+        let user = '';
+        getSelfInfo(function (u) {
+            user = u;
+            if (user !== '') {
+                // 로그인 한 경우, 글쓰기, 로그아웃 버튼을 보여줌
+                $('#signOutFunction').show();
+                $('#signInFunction').hide();
+                $('#buttons_area').show();
+            }
+        });
+
+        // 최초 접근 시 모든 게시글을 불러온다.
+        $(document).ready(function () {
+            console.log('ready');
+            getArticles(null, function (articles) {
+                for (let i = 0; i < articles.length; i++) {
+                    makeCard(articles[i]);
+                }
+            });
+        });
+
+        function getArticles(category, callback) {
+            $('#articleCardList').empty();
+            $.ajax({
+                type: 'GET',
+                url: `/api/articles`,
+                success: function (response) {
+                    callback(response['articles']);
+                },
+            });
+        }
+
+        function makeCard(item) {
+            // item.createdAt -> item["createdAt"] 로 불러와도 가능함.
+            let createdDate = new Date(item.createdAt).toLocaleDateString(
+                'ko-KR'
+            ); // 한국식 연월일 날짜로 변경
+            //alert(item.createdAt);
+            //alert(typeof(item.createdAt));
+            let temp_html = `<div class="column is-one-third">
+                <div class="card is-shady" style="cursor: pointer;" onclick="location.href='/articles/${item['articleId']}'">
+                    <div class="card-content">
+                        <p class="title is-4" id="titleSummary">${item['title']}</p>
+                        <p class="subtitle" id="contentSummary">${item['content']}</p>
+                    </div>
+                    <footer class="card-footer">
+                        <p class="card-footer-item">
+                            <span>by <b>${item['authorInfo']['authorName']}</b></span>
+                        </p>
+                        <p class="card-footer-item">
+                            <span>
+                                <time>${createdDate}</time>
+                            </span>
+                        </p>
+                    </footer>
+                </div>    
+            </div>`;
+            $('#articleCardList').append(temp_html);
+        }
+    </script>
+</html>

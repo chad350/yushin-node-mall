@@ -1,0 +1,304 @@
+<!-- views/write.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title><% if(!article) { %>
+        새 글 작성
+    <% } else { %>
+        글 수정하기
+    <% } %></title>
+    <!-- AJAX 통신을 위한 jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <!-- Bulma CSS 링크 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css">
+
+    <!-- 커스텀 폰트 -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard-dynamic-subset.css" />
+
+    <!-- font-awesome 링크  -->
+    <script src="https://kit.fontawesome.com/23b05056a7.js" crossorigin="anonymous"></script>
+
+    
+
+    <style>
+        *, input::placeholder, input, textarea{
+            font-family: Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+        }
+    </style>
+    
+</head>
+
+
+<body>
+    <section class="hero is-info is-small">
+        <div class="hero-body">
+          <p class="title" style="text-align: center;">
+            <% if(!article) { %>
+                새 글 작성
+            <% } else { %>
+                글 수정하기
+            <% } %>
+          </p>
+          <p class="subtitle" style="text-align: center;">
+            <% if(!article) { %>
+                남기고 싶은 내용을 적어보세요.
+            <% } else {%>
+                작성한 내용을 수정하거나 삭제해보세요.
+            <% } %>
+          </p>
+        </div>
+      </section>
+    <section class="hero is-halfheight">
+		<div class="hero-body">
+            <div class="container has-text-centered"> 
+				<div class="columns is-8 is-variable ">
+					<div class="column has-text-left">
+						<div class="field">
+							<label class="label">작성자명</label>
+							<div class="control">
+                                <%# article이 존재하는 경우는 api/articles/modify 로 접근한 경우. 내부 내용을 input 항목에 부어준다. %>
+                                <% if(Object.keys(article).length > 0) { %>
+								    <input class="input is-medium" id="authorName" type="text" placeholder="작성자명을 입력하세요." value="<%=article.authorName %>">
+                                <% } else { %>
+                                    <input class="input is-medium" id="authorName" type="text" placeholder="작성자명을 입력하세요.">
+                                <% } %>
+							</div>
+						</div>
+                        <div class="field">
+							<label class="label">비밀번호</label>
+							<div class="control">
+								<input class="input is-medium" id="articlePassword" type="password" placeholder="글 비밀번호를 입력하세요.">
+							</div>
+						</div>
+                        <div class="field">
+							<label class="label">제목</label>
+							<div class="control">
+								<% if(Object.keys(article).length > 0) { %>
+                                <input class="input is-medium" id="title" type="text" placeholder="글 제목을 입력하세요." value="<%=article.title %>">
+                                <% } else { %>
+                                <input class="input is-medium" id="title" type="text" placeholder="글 제목을 입력하세요.">
+                                <% } %>
+                            </div>
+						</div>
+						<div class="field">
+							<label class="label">내용</label>
+							<div class="control">
+								<% if(Object.keys(article).length > 0) { %>
+                                <textarea class="textarea is-medium" id="content" placeholder="여기에 말하고 싶은 이야기를 작성해보세요!"><%=article.content %></textarea>
+                                <% } else { %>
+                                <textarea class="textarea is-medium" id="content" placeholder="여기에 말하고 싶은 이야기를 작성해보세요!"></textarea>
+                                <% } %>
+							</div>
+						</div>
+                        <input type="hidden" id="authorId" type="number" value="">
+                        <input type="hidden" id="articleId" type="number" value="<%=article.articleId%>">
+						<div class="control">
+                            <% if(!article) { %>
+							    <button type="submit" class="button is-link is-fullwidth has-text-weight-medium is-medium" onclick="writeArticle();">
+                                    <span class="icon is-small"><i class="fas fa-pen"></i></span>
+                                    <span>글쓰기</span>
+                                </button>
+                            <% } else { %>
+                                <div class="buttons is-centered">
+                                    <button type="submit" class="button is-primary is-medium" onclick="modifyArticle();">
+                                        <span class="icon is-small"><i class="fas fa-edit"></i></span>
+                                        <span>수정완료</span>
+                                    </button>
+                                    <button type="submit" class="button is-danger is-medium" onclick="deleteArticle();">
+                                        <span class="icon is-small"><i class="fas fa-trash"></i></span>
+                                        <span>삭제하기</span>
+                                    </button>
+                                </div>
+                            <% } %>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+        <div class="hero-foot">
+            <nav class="tabs">
+                <div class="container">
+                    <ul class="is-right">
+                        <li>
+                            <a style="display: none" id="signInFunction" onclick="window.location.href='/login';">
+                                <span class="icon is-small"><i class="fas fa-sign-in-alt"></i></span>
+                                <span>로그인</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a id="signOutFunction" onclick="signOut();">
+                                <span class="icon is-small"><i class="fas fa-sign-out-alt"></i></span>
+                                <span>로그아웃</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+	</section>
+    <script src="/api.js"></script>
+    <script>
+        let user;
+        getSelf(function (u) {
+            user = u;
+        });
+
+        // 글 작성 시, 사용자 기본 정보 가져오기
+        function getAuthorInfo(){
+            $.ajax({
+                type: "GET",
+                url: "/api/articles/write",
+                headers: {
+                    authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+                success: function (response) {
+                    $('#authorName').val(response["author"].authorName);
+                    $('#authorId').val(response["author"].authorId);
+                    $('#authorName').attr("readonly", ""); // 사용자명은 읽기 전용으로 지정
+                },
+                error: function (xhr, status, error, response) {
+                    // 로그인 하지 않고 URL 주소 직접 입력 등으로 접근했을 경우
+                    if (error === "Unauthorized") {
+                        alert(xhr.responseJSON["errorMessage"]);
+                    } else {
+                        localStorage.clear();
+                        // alert(JSON.stringify(xhr.responseJSON["errorMessage"]));
+                        // alert(JSON.parse(request.responseText)["errorMessage"]);
+                        // alert(error.responseJSON.errorMessage);
+                        alert("알 수 없는 문제가 발생했습니다. 관리자에게 문의하세요.");
+                    }
+                    window.location.href = "/login";
+                },
+            });
+        }
+
+        // [글쓰기] 버튼 눌렀을때 동작하는 게시글 쓰기 함수
+        function writeArticle(){
+            let authorId = $('#authorId').val();
+            let articlePassword = $('#articlePassword').val();
+            let title = $('#title').val();
+            let content = $('#content').val();
+    
+            // 기본적인 빈칸 체크
+            if (articlePassword == '') {
+                $('#articlePassword').focus()
+                alert('글 비밀번호를 입력하여 주세요.');
+                return;
+            } else if (title == '') {
+                $('#title').focus()
+                alert('글 제목을 입력하여 주세요.');
+                return;
+            } else if (content == '') {
+                $('#content').focus()
+                alert("글 내용을 입력하여 주세요.");
+                return;
+            };
+            $.ajax({
+                type: "POST",
+                url: "/api/articles/write",
+                headers: {
+                    authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+                data: {
+                    authorId: authorId,
+                    articlePassword: articlePassword,
+                    title: title,
+                    content: content
+                },
+                success: function (response) {
+                    alert(response["msg"])
+                    window.location.href = '/'
+                }
+            });
+        }
+            
+        // 글 [수정하기] 버튼 눌렀을 때 수정 동작을 수행하는 함수
+        function modifyArticle(){
+            let authorId = $('#authorId').val();
+            let articlePassword = $('#articlePassword').val();
+            let title = $('#title').val();
+            let content = $('#content').val();
+            let articleId = $('#articleId').val();
+    
+                if (articlePassword == '') {
+                    $('#articlePassword').focus()
+                    alert('글 비밀번호를 입력하여 주세요.');
+                    return;
+                } else if (title == '') {
+                    $('#title').focus()
+                    alert('글 제목을 입력하여 주세요.');
+                    return;
+                } else if (content == '') {
+                    $('#content').focus()
+                    alert("글 내용을 입력하여 주세요.");
+                    return;
+                } else {
+                    $.ajax({
+                    type: "PATCH",
+                    url: "/api/articles/" + articleId + "/modify",
+                    data: {
+                        authorId: authorId,
+                        articlePassword: articlePassword,
+                        title: title,
+                        content: content,
+                        articleId: articleId
+                    },
+                    headers: {
+                        authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                    error: function (request, xhr, status) {
+                        alert(JSON.parse(request.responseText)["msg"]);
+                    },
+                    success: function (response) {
+                        alert(response["msg"]);
+                        window.location.href = '/';
+                    }
+                    });
+                }
+            }
+            // 글 [삭제하기] 버튼 선택 시 사용되는 글 삭제 함수
+            function deleteArticle(){
+                let articlePassword = $('#articlePassword').val();
+                let articleId = $('#articleId').val();
+                if(confirm("정말로 삭제하시겠습니까?")){
+                    if (articlePassword == '') {
+                        $('#articlePassword').focus()
+                        alert('글 비밀번호를 입력하여 주세요.');
+                        return;
+                    }
+                    $.ajax({
+                        type: "DELETE",
+                        url: "/api/articles/" + articleId + "/modify",
+                        data: {
+                            articlePassword: articlePassword,
+                            articleId: articleId
+                        },
+                        headers: {
+                            authorization: `Bearer ${localStorage.getItem("token")}`,
+                        },
+                        error: function (request, xhr, status) {
+                            alert(JSON.parse(request.responseText)["msg"]);
+                        },
+                        success: function (response) {
+                            alert(response["msg"])
+                            window.location.href = '/'
+                        }
+                    });
+                } else {
+                    return false;
+                }
+            }
+
+            window.onload = function() {
+                console.log("ready");
+                getAuthorInfo();
+            };
+    </script>
+</body>
+
+</html>
